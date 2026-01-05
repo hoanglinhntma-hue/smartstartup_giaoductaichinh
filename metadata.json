@@ -1,0 +1,7 @@
+{
+  "name": "Smart Startup: Tài Chính Gen Z",
+  "description": "Một ứng dụng giáo dục tài chính thông minh dành cho học sinh THPT, giúp tính toán lãi suất, khởi nghiệp và tư vấn tài chính cùng AI Chị Mai Banker.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
