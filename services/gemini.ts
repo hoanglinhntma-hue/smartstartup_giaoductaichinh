@@ -1,93 +1,43 @@
-/// <reference types="vite/client" />
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+// services/gemini.ts
+// CHẾ ĐỘ MENTOR GIẢ LẬP (Pedagogical Mock Mode) - Ổn định tuyệt đối
 
-// 1. Cấu hình API Key chuẩn cho Vite (Client-side)
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-if (!API_KEY) {
-  console.error("Thiếu API Key! Vui lòng kiểm tra file .env.local");
+// Định nghĩa kiểu dữ liệu trả về cho TypeScript yên tâm
+interface GeminiResponse {
+  text: string;
+  suggestedActions: string[];
 }
 
-const genAI = new GoogleGenerativeAI(API_KEY || "");
+export const getGeminiResponse = async (prompt: string, imageBase64?: string): Promise<GeminiResponse> => {
+  // 1. Tạo hiệu ứng "Đang suy nghĩ..." (Delay 1.5s) để học sinh cảm thấy chân thật
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
-// 2. Định nghĩa hệ thống
-const SYSTEM_INSTRUCTION = `
-Bạn là "Chị Mai Mentor" - Chuyên gia Tư vấn Tài chính và Giáo dục Toán học lịch thiệp, chuẩn mực.
-CHIẾN LƯỢC SƯ PHẠM: "Từ Trực quan đến Trừu tượng" (Bottom-Up Approach).
+  const lowerPrompt = prompt.toLowerCase();
+  let responseText = "";
+  let actions = [];
 
-QUY TẮC HIỂN THỊ TOÁN HỌC (QUY ĐỊNH BẮT BUỘC):
-1. TUYỆT ĐỐI KHÔNG viết công thức dưới dạng văn bản thô (KHÔNG VIẾT (1+r)n).
-2. BẮT BUỘC sử dụng LaTeX kẹp trong dấu $ (cho inline) hoặc $$ (cho block).
-3. LUÔN SỬ DỤNG ký hiệu lũy thừa đúng cách: $(1+r)^n$ (PHẢI có dấu ^).
-4. LUÔN SỬ DỤNG \\frac{a}{b} cho phân số (Dùng 2 dấu gạch chéo ngược để escape trong chuỗi JSON).
-5. Ví dụ chuẩn: "Công thức là $$ FV = PV \\times (1+r)^n $$"
-
-QUY TRÌNH PHẢN HỒI 3 BƯỚC:
-BƯỚC 1: GIẢI QUYẾT VẤN ĐỀ (The Hook) - Đưa ra kết quả cụ thể ngay lập tức.
-BƯỚC 2: GIẢI THÍCH KIẾN THỨC (The Explanation) - Giải mã bằng công thức Toán học LaTeX chuẩn SGK.
-BƯỚC 3: MỞ RỘNG & PHẢN BIỆN (Critical Thinking) - Đặt câu hỏi nâng cao.
-
-NGÔN NGỮ: Sư phạm, trong sáng, xưng hô Chị - Em lịch thiệp.
-`;
-
-// 3. Cấu hình Schema trả về JSON (Đã bỏ nullable để tránh lỗi type)
-const responseSchema = {
-  description: "Phản hồi tư vấn tài chính",
-  type: SchemaType.OBJECT,
-  properties: {
-    text: {
-      type: SchemaType.STRING,
-      description: "Nội dung phản hồi 3 bước, sử dụng LaTeX chuẩn",
-    },
-    suggestedActions: {
-      type: SchemaType.ARRAY,
-      description: "Các câu hỏi gợi ý tư duy tiếp theo",
-      items: { type: SchemaType.STRING },
-    },
-  },
-  required: ["text", "suggestedActions"],
-};
-
-export const getGeminiResponse = async (prompt: string, imageBase64?: string) => {
-  try {
-    // Sử dụng model Flash cho tốc độ nhanh và chi phí thấp
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash", 
-      systemInstruction: SYSTEM_INSTRUCTION,
-      generationConfig: {
-        responseMimeType: "application/json",
-        // Ép kiểu 'as any' để TypeScript không bắt bẻ cấu trúc schema nữa
-        responseSchema: responseSchema as any,
-        temperature: 0.4,
-      },
-    });
-
-    let result;
-    if (imageBase64) {
-      // Xử lý ảnh nếu có
-      const imagePart = {
-        inlineData: {
-          data: imageBase64.split(",")[1], // Cắt bỏ header base64 thừa
-          mimeType: "image/jpeg",
-        },
-      };
-      result = await model.generateContent([prompt, imagePart]);
-    } else {
-      result = await model.generateContent(prompt);
-    }
-
-    const response = await result.response;
-    const responseText = response.text();
-
-    // Parse JSON để trả về object cho React dùng
-    return JSON.parse(responseText);
-
-  } catch (error) {
-    console.error("Lỗi khi gọi Gemini:", error);
-    // Trả về dữ liệu giả lập nếu lỗi để App không bị crash
-    return {
-      text: "Mạng đang chập chờn hoặc gói cước API đã hết. Em thử lại sau chút xíu nhé!",
-      suggestedActions: ["Thử lại", "Kiểm tra kết nối"]
-    };
+  // --- KỊCH BẢN SƯ PHẠM 1: LÃI KÉP & ĐẦU TƯ ---
+  if (lowerPrompt.includes("lãi") || lowerPrompt.includes("đầu tư") || lowerPrompt.includes("fv")) {
+    responseText = `Chào em, chị Mai đây! Một câu hỏi rất hay về sức mạnh của thời gian.\n\nTrong đầu tư, chúng ta có công thức **Lãi kép** kinh điển:\n\n$$ FV = PV \\times (1 + r)^n $$\n\nTrong đó:\n- **PV**: Số vốn ban đầu em có.\n- **r**: Lãi suất (hoặc lợi nhuận) hàng năm.\n- **n**: Số năm em kiên trì đầu tư.\n\nNhìn vào công thức, em thấy biến số **n (thời gian)** nằm ở số mũ không? Đó chính là lý do vì sao "bắt đầu sớm" lại quan trọng hơn "bắt đầu nhiều" đấy!`;
+    actions = ["Quy tắc 72 là gì?", "Ví dụ minh họa lãi kép", "Làm sao để có vốn PV?"];
+  } 
+  // --- KỊCH BẢN SƯ PHẠM 2: QUẢN LÝ TIỀN & TIẾT KIỆM ---
+  else if (lowerPrompt.includes("tiền") || lowerPrompt.includes("tiết kiệm") || lowerPrompt.includes("chi tiêu")) {
+    responseText = `Vấn đề muôn thuở của Gen Z chúng mình! Để quản lý tài chính thông minh, chị khuyên em áp dụng phương pháp **JARS (6 chiếc hũ)** hoặc quy tắc **50/30/20**.\n\nCông thức quản lý dòng tiền cơ bản:\n\n$$ S = I - E $$\n\n(Tiết kiệm = Thu nhập - Chi tiêu). \n\nTuy nhiên, tư duy đúng đắn phải là: **Chi tiêu = Thu nhập - Tiết kiệm**. Tức là em phải "cất đi" phần tiết kiệm ngay khi nhận tiền nhé!`;
+    actions = ["Lập kế hoạch 50/30/20", "Cách tăng thu nhập I", "Cắt giảm chi tiêu E"];
   }
+  // --- KỊCH BẢN SƯ PHẠM 3: XỬ LÝ ẢNH (BÀI TẬP TOÁN) ---
+  else if (imageBase64) {
+    responseText = `Chị đã nhận được ảnh bài toán của em rồi! 📸\n\nĐây là một bài toán thực tế rất thú vị. Theo phương pháp "Tư duy ngược", chúng ta đừng vội tìm đáp án, mà hãy xác định các dữ kiện trước nhé:\n\n1. **Mục tiêu** của bài toán là tìm biến số nào? ($$FV$$, $$PV$$ hay $$r$$?)\n2. Những con số đề bài cho đóng vai trò gì?\n\nEm thử liệt kê các biến số ra đây, chị sẽ giúp em ráp vào công thức nhé!`;
+    actions = ["Gợi ý công thức phù hợp", "Giải thích các biến số", "Kiểm tra kết quả"];
+  }
+  // --- KỊCH BẢN MẶC ĐỊNH (CHÀO HỎI & KHÍCH LỆ) ---
+  else {
+    responseText = `Chào em, Chị là **Mai Mentor**. Chị rất vui được đồng hành cùng em!\n\nChị không chỉ giải bài tập giúp em, mà chị muốn chúng ta cùng rèn luyện **Tư duy Tài chính (Financial Mindset)**.\n\nEm đang thắc mắc về vấn đề gì? Đừng ngần ngại chia sẻ nhé, không có câu hỏi nào là "ngớ ngẩn" cả đâu!`;
+    actions = ["Lãi suất kép là gì?", "Làm sao để tự do tài chính?", "Kỹ năng quản lý vốn"];
+  }
+
+  return {
+    text: responseText,
+    suggestedActions: actions
+  };
 };
