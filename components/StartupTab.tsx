@@ -119,9 +119,9 @@ const StartupTab: React.FC = () => {
                 <div className="p-3 bg-white rounded-2xl border border-slate-100 shadow-sm shrink-0"><DollarSign className="text-slate-600" size={24} /></div>
                 <div className="space-y-4 w-full">
                   <p className="font-bold text-slate-700 uppercase text-sm tracking-widest">Cơ sở mô hình hóa</p>
-                  <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center shadow-inner">
-                    {/* CÔNG THỨC CHUẨN: Dùng block math $$ */}
-                    <MathDisplay content={"$$P(x) = (S - C) \\times x - K$$"} className="text-2xl md:text-3xl text-slate-800" />
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center shadow-inner overflow-x-auto">
+                    {/* CÔNG THỨC CHUẨN: Đã thêm whitespace-nowrap để chống xuống dòng */}
+                    <MathDisplay content={"$$P(x) = (S - C) \\times x - K$$"} className="text-xl md:text-2xl text-slate-800 whitespace-nowrap" />
                   </div>
                   <div className="text-base text-slate-600 leading-relaxed font-medium">
                     <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
