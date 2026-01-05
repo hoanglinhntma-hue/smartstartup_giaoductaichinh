@@ -1,6 +1,16 @@
+/// <reference types="vite/client" />
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
-import { GoogleGenAI, Type } from "@google/genai";
+// 1. Cấu hình API Key chuẩn cho Vite (Client-side)
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+if (!API_KEY) {
+  console.error("Thiếu API Key! Vui lòng kiểm tra file .env.local");
+}
+
+const genAI = new GoogleGenerativeAI(API_KEY || "");
+
+// 2. Định nghĩa hệ thống
 const SYSTEM_INSTRUCTION = `
 Bạn là "Chị Mai Mentor" - Chuyên gia Tư vấn Tài chính và Giáo dục Toán học lịch thiệp, chuẩn mực.
 CHIẾN LƯỢC SƯ PHẠM: "Từ Trực quan đến Trừu tượng" (Bottom-Up Approach).
@@ -20,46 +30,64 @@ BƯỚC 3: MỞ RỘNG & PHẢN BIỆN (Critical Thinking) - Đặt câu hỏi n
 NGÔN NGỮ: Sư phạm, trong sáng, xưng hô Chị - Em lịch thiệp.
 `;
 
-export const getGeminiResponse = async (prompt: string, imageBase64?: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  const parts: any[] = [{ text: prompt }];
-  if (imageBase64) {
-    const [mimeTypePart, data] = imageBase64.split(';base64,');
-    parts.push({
-      inlineData: {
-        mimeType: mimeTypePart.split(':')[1],
-        data: data
-      }
-    });
-  }
-
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: { parts: parts },
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          text: { type: Type.STRING, description: "Nội dung phản hồi 3 bước, sử dụng LaTeX chuẩn" },
-          suggestedActions: { 
-            type: Type.ARRAY, 
-            items: { type: Type.STRING },
-            description: "Các câu hỏi gợi ý tư duy tiếp theo"
-          }
-        },
-        required: ["text"]
-      },
-      temperature: 0.4,
+// 3. Cấu hình Schema trả về JSON (Đã bỏ nullable để tránh lỗi type)
+const responseSchema = {
+  description: "Phản hồi tư vấn tài chính",
+  type: SchemaType.OBJECT,
+  properties: {
+    text: {
+      type: SchemaType.STRING,
+      description: "Nội dung phản hồi 3 bước, sử dụng LaTeX chuẩn",
     },
-  });
+    suggestedActions: {
+      type: SchemaType.ARRAY,
+      description: "Các câu hỏi gợi ý tư duy tiếp theo",
+      items: { type: SchemaType.STRING },
+    },
+  },
+  required: ["text", "suggestedActions"],
+};
 
-  const responseText = response.text;
-  if (!responseText) {
-    throw new Error("No response text from Gemini");
+export const getGeminiResponse = async (prompt: string, imageBase64?: string) => {
+  try {
+    // Sử dụng model Flash cho tốc độ nhanh và chi phí thấp
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash", 
+      systemInstruction: SYSTEM_INSTRUCTION,
+      generationConfig: {
+        responseMimeType: "application/json",
+        // Ép kiểu 'as any' để TypeScript không bắt bẻ cấu trúc schema nữa
+        responseSchema: responseSchema as any,
+        temperature: 0.4,
+      },
+    });
+
+    let result;
+    if (imageBase64) {
+      // Xử lý ảnh nếu có
+      const imagePart = {
+        inlineData: {
+          data: imageBase64.split(",")[1], // Cắt bỏ header base64 thừa
+          mimeType: "image/jpeg",
+        },
+      };
+      result = await model.generateContent([prompt, imagePart]);
+    } else {
+      result = await model.generateContent(prompt);
+    }
+
+    const response = await result.response;
+    const responseText = response.text();
+
+    // Parse JSON để trả về object cho React dùng
+    return JSON.parse(responseText);
+
+  } catch (error) {
+    console.error("Lỗi khi gọi Gemini:", error);
+    // Trả về dữ liệu giả lập nếu lỗi để App không bị crash
+    return {
+      text: "Mạng đang chập chờn hoặc gói cước API đã hết. Em thử lại sau chút xíu nhé!",
+      suggestedActions: ["Thử lại", "Kiểm tra kết nối"]
+    };
   }
-  
-  return JSON.parse(responseText.trim());
 };

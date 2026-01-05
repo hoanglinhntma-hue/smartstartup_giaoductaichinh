@@ -188,8 +188,8 @@ const CompoundTab: React.FC = () => {
             <div className="space-y-5">
               <div className="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100 text-center">
                 <p className="text-xs mb-3 font-bold text-emerald-600 uppercase text-left tracking-wider">Hàm tích lũy chuỗi tiền gửi:</p>
-                {/* Công thức to, rõ, block math */}
-                <MathDisplay content={"$$FV = A \\times \\frac{(1+r)^n - 1}{r} \\times (1+r)$$"} className="text-2xl md:text-3xl text-emerald-900" />
+                {/* CÔNG THỨC ĐÃ SỬA: Thêm whitespace-nowrap và giảm size chữ */}
+                <MathDisplay content={"$$FV = A \\times \\frac{(1+r)^n - 1}{r} \\times (1+r)$$"} className="text-xl md:text-2xl text-emerald-900 whitespace-nowrap" />
               </div>
               <div className="text-base text-slate-500 leading-relaxed font-medium px-2">
                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
